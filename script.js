@@ -9,6 +9,7 @@ class NFCScanner {
         this.scanDelay = 1500; // 1 second delay between scans
         this.serialToRollMap = new Map(); // Map: serial -> roll number
         this.serialToNameMap = new Map(); // Map: serial -> name
+        this.pendingSerial = null; // Track serial waiting for user input
         this.initializeElements();
         this.bindEvents();
         this.checkNFCSupport();
@@ -29,6 +30,15 @@ class NFCScanner {
         this.errorMessage = document.getElementById('errorMessage');
         this.clearButton = document.getElementById('clearButton');
         this.csvInput = document.getElementById('csvInput');
+        
+        // Modal elements
+        this.dataEntryModal = document.getElementById('dataEntryModal');
+        this.modalSerial = document.getElementById('modalSerial');
+        this.modalRoll = document.getElementById('modalRoll');
+        this.modalName = document.getElementById('modalName');
+        this.closeModal = document.getElementById('closeModal');
+        this.cancelModal = document.getElementById('cancelModal');
+        this.saveModal = document.getElementById('saveModal');
     }
 
     bindEvents() {
@@ -36,6 +46,26 @@ class NFCScanner {
         this.clearButton.addEventListener('click', () => this.clearResults());
         if (this.csvInput) {
             this.csvInput.addEventListener('change', (e) => this.handleCSVImport(e));
+        }
+        
+        // Modal event bindings
+        if (this.closeModal) {
+            this.closeModal.addEventListener('click', () => this.hideModal());
+        }
+        if (this.cancelModal) {
+            this.cancelModal.addEventListener('click', () => this.hideModal());
+        }
+        if (this.saveModal) {
+            this.saveModal.addEventListener('click', () => this.saveModalData());
+        }
+        
+        // Close modal when clicking outside
+        if (this.dataEntryModal) {
+            this.dataEntryModal.addEventListener('click', (e) => {
+                if (e.target === this.dataEntryModal) {
+                    this.hideModal();
+                }
+            });
         }
     }
 
@@ -218,6 +248,18 @@ class NFCScanner {
             const serialNumber = this.extractSerialNumber(event);
             
             if (serialNumber) {
+                // Check if we have roll number and name for this serial
+                const normalizedSerial = this.normalizeSerial(serialNumber);
+                const hasRoll = this.serialToRollMap.has(normalizedSerial);
+                const hasName = this.serialToNameMap.has(normalizedSerial);
+                
+                if (!hasRoll || !hasName) {
+                    // Show popup for missing data
+                    this.pendingSerial = serialNumber;
+                    this.showDataEntryModal(serialNumber);
+                    return; // Don't add to list yet, wait for user input
+                }
+                
                 // Add to serial numbers list if not already present
                 if (!this.serialNumbers.some(entry => entry.serial === serialNumber)) {
                     this.serialNumbers.push({
@@ -1273,6 +1315,118 @@ class NFCScanner {
                 document.body.removeChild(successDiv);
             }
         }, 1500); // Shorter duration for continuous scanning
+    }
+
+    // Modal methods
+    showDataEntryModal(serialNumber) {
+        if (!this.dataEntryModal) return;
+        
+        this.modalSerial.value = serialNumber;
+        this.modalRoll.value = '';
+        this.modalName.value = '';
+        this.dataEntryModal.style.display = 'flex';
+        
+        // Focus on roll number input
+        setTimeout(() => {
+            this.modalRoll.focus();
+        }, 100);
+    }
+
+    hideModal() {
+        if (!this.dataEntryModal) return;
+        
+        this.dataEntryModal.style.display = 'none';
+        this.pendingSerial = null;
+    }
+
+    async saveModalData() {
+        if (!this.pendingSerial) return;
+        
+        const rollNumber = this.modalRoll.value.trim();
+        const name = this.modalName.value.trim();
+        
+        if (!rollNumber || !name) {
+            alert('Please enter both roll number and name.');
+            return;
+        }
+        
+        try {
+            // Add to local maps
+            const normalizedSerial = this.normalizeSerial(this.pendingSerial);
+            this.serialToRollMap.set(normalizedSerial, rollNumber);
+            this.serialToNameMap.set(normalizedSerial, name);
+            
+            // Update CSV file
+            await this.updateCSVFile(this.pendingSerial, rollNumber, name);
+            
+            // Add to serial numbers list
+            if (!this.serialNumbers.some(entry => entry.serial === this.pendingSerial)) {
+                this.serialNumbers.push({
+                    serial: this.pendingSerial,
+                    timestamp: new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}),
+                    scan_count: 1
+                });
+            }
+            
+            // Update display
+            let displayData = this.formatSerialDisplay(this.pendingSerial);
+            this.displayResults(displayData);
+            this.updateUI('scanning', `Scanning... (${this.serialNumbers.length} serial numbers found)`);
+            
+            this.hideModal();
+            this.showSuccessMessage(`Data saved for ${this.pendingSerial}: ${name} (${rollNumber})`);
+            
+        } catch (error) {
+            console.error('Error saving data:', error);
+            alert('Error saving data. Please try again.');
+        }
+    }
+
+    async updateCSVFile(serialNumber, rollNumber, name) {
+        try {
+            // Read current CSV content
+            const response = await fetch('rolls.csv');
+            if (!response.ok) {
+                throw new Error('Could not read CSV file');
+            }
+            const csvContent = await response.text();
+            
+            // Parse existing data
+            const lines = csvContent.split(/\r?\n/).filter(line => line.trim());
+            const headerLine = lines[0];
+            const dataLines = lines.slice(1);
+            
+            // Check if serial already exists
+            const normalizedSerial = this.normalizeSerial(serialNumber);
+            let serialExists = false;
+            
+            const updatedLines = dataLines.map(line => {
+                const [existingSerial] = line.split(',');
+                if (this.normalizeSerial(existingSerial) === normalizedSerial) {
+                    serialExists = true;
+                    return `${serialNumber},${rollNumber},${name}`;
+                }
+                return line;
+            });
+            
+            // If serial doesn't exist, add new line
+            if (!serialExists) {
+                updatedLines.push(`${serialNumber},${rollNumber},${name}`);
+            }
+            
+            // Create new CSV content
+            const newCSVContent = headerLine + '\n' + updatedLines.join('\n') + '\n';
+            
+            // Note: In a real application, you would need a backend to write files
+            // For now, we'll just update the local maps and show a message
+            console.log('Would update CSV with:', newCSVContent);
+            this.showSuccessMessage('Data saved locally. CSV file update requires backend support.');
+            
+        } catch (error) {
+            console.error('Error updating CSV:', error);
+            // Fallback: just update local maps
+            this.showSuccessMessage('Data saved locally. CSV file update failed.');
+        }
     }
 }
 
