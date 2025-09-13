@@ -18,6 +18,21 @@ class NFCScanner {
         
         // Make this instance globally accessible for export functions
         window.nfcScanner = this;
+        
+        // Add test method for debugging modal
+        window.testModal = () => {
+            console.log('Testing modal...');
+            this.showDataEntryModal('TEST:SERIAL:123');
+        };
+        
+        // Ensure modal events are bound after DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.bindModalEvents();
+            });
+        } else {
+            this.bindModalEvents();
+        }
     }
 
     initializeElements() {
@@ -28,7 +43,6 @@ class NFCScanner {
         this.dataDisplay = document.getElementById('dataDisplay');
         this.errorSection = document.getElementById('errorSection');
         this.errorMessage = document.getElementById('errorMessage');
-        this.clearSection = document.getElementById('clearSection');
         this.clearButton = document.getElementById('clearButton');
         this.csvInput = document.getElementById('csvInput');
         
@@ -49,25 +63,76 @@ class NFCScanner {
             this.csvInput.addEventListener('change', (e) => this.handleCSVImport(e));
         }
         
+    }
+
+    bindModalEvents() {
+        // Re-initialize modal elements in case they weren't found earlier
+        this.dataEntryModal = document.getElementById('dataEntryModal');
+        this.modalSerial = document.getElementById('modalSerial');
+        this.modalRoll = document.getElementById('modalRoll');
+        this.modalName = document.getElementById('modalName');
+        this.closeModal = document.getElementById('closeModal');
+        this.cancelModal = document.getElementById('cancelModal');
+        this.saveModal = document.getElementById('saveModal');
+        
         // Modal event bindings
+        console.log('Modal elements found:', {
+            closeModal: !!this.closeModal,
+            cancelModal: !!this.cancelModal,
+            saveModal: !!this.saveModal,
+            dataEntryModal: !!this.dataEntryModal
+        });
+        
         if (this.closeModal) {
-            this.closeModal.addEventListener('click', () => this.hideModal());
+            this.closeModal.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Close button clicked');
+                this.hideModal();
+            });
         }
         if (this.cancelModal) {
-            this.cancelModal.addEventListener('click', () => this.hideModal());
+            this.cancelModal.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Cancel button clicked');
+                this.hideModal();
+            });
         }
         if (this.saveModal) {
-            this.saveModal.addEventListener('click', () => this.saveModalData());
+            this.saveModal.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Save button clicked');
+                this.saveModalData();
+            });
         }
         
         // Close modal when clicking outside
         if (this.dataEntryModal) {
             this.dataEntryModal.addEventListener('click', (e) => {
                 if (e.target === this.dataEntryModal) {
+                    console.log('Clicked outside modal');
                     this.hideModal();
                 }
             });
         }
+        
+        // Fallback: Use event delegation on document
+        document.addEventListener('click', (e) => {
+            if (e.target && e.target.id === 'closeModal') {
+                e.preventDefault();
+                console.log('Close button clicked (delegation)');
+                this.hideModal();
+            }
+            if (e.target && e.target.id === 'cancelModal') {
+                e.preventDefault();
+                console.log('Cancel button clicked (delegation)');
+                this.hideModal();
+            }
+            if (e.target && e.target.id === 'saveModal') {
+                e.preventDefault();
+                console.log('Save button clicked (delegation)');
+                this.saveModalData();
+            }
+        });
     }
 
     // Programmatic trigger for choosing CSV file (can be attached to a button later)
@@ -1140,14 +1205,6 @@ class NFCScanner {
     displayResults(data) {
         this.dataDisplay.innerHTML = data;
         this.resultsSection.style.display = 'block';
-        
-        // Show clear section only if there are serial numbers
-        if (this.serialNumbers.length > 0) {
-            this.clearSection.style.display = 'block';
-        } else {
-            this.clearSection.style.display = 'none';
-        }
-        
         this.resultsSection.scrollIntoView({ behavior: 'smooth' });
     }
 
@@ -1159,7 +1216,6 @@ class NFCScanner {
         // Clear the UI
         this.dataDisplay.textContent = '';
         this.resultsSection.style.display = 'none';
-        this.clearSection.style.display = 'none';
         
         // Update status
         if (this.isScanning) {
@@ -1329,24 +1385,36 @@ class NFCScanner {
 
     // Modal methods
     showDataEntryModal(serialNumber) {
-        if (!this.dataEntryModal) return;
+        console.log('showDataEntryModal called with:', serialNumber);
+        if (!this.dataEntryModal) {
+            console.log('No dataEntryModal element found');
+            return;
+        }
         
         this.modalSerial.value = serialNumber;
         this.modalRoll.value = '';
         this.modalName.value = '';
         this.dataEntryModal.style.display = 'flex';
+        console.log('Modal shown successfully');
         
         // Focus on roll number input
         setTimeout(() => {
-            this.modalRoll.focus();
+            if (this.modalRoll) {
+                this.modalRoll.focus();
+            }
         }, 100);
     }
 
     hideModal() {
-        if (!this.dataEntryModal) return;
+        console.log('hideModal called');
+        if (!this.dataEntryModal) {
+            console.log('No dataEntryModal element found');
+            return;
+        }
         
         this.dataEntryModal.style.display = 'none';
         this.pendingSerial = null;
+        console.log('Modal hidden successfully');
     }
 
     async saveModalData() {

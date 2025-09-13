@@ -132,25 +132,15 @@ main {
     font-size: 1.5rem;
 }
 
-/* Results section - completely new layout */
+/* Results section */
 .results-section {
     background: transparent;
     border-radius: 0;
     padding: 0;
     box-shadow: none;
-    margin-top: 20px;
-    width: 100%;
-    margin-bottom: 0;
-}
-
-/* Clear section - separate from results */
-.clear-section {
-    margin-top: 20px;
-    margin-bottom: 20px;
-    width: 100%;
     display: flex;
-    justify-content: center;
-    padding: 0;
+    flex-direction: column;
+    gap: 8px;
 }
 
 @keyframes slideIn {
@@ -185,6 +175,11 @@ main {
     line-height: 1.3;
 }
 
+/* Ensure Clear Results stays below the table */
+#dataDisplay { order: 1; }
+.clear-button {
+    order: 2;
+}
 
 .data-display h3 {
     color: #495057;
@@ -223,16 +218,16 @@ main {
     background: #dc3545;
     color: white;
     border: none;
-    padding: 12px 24px;
+    padding: 10px 20px;
     border-radius: 25px;
     cursor: pointer;
     font-weight: 600;
     transition: all 0.3s ease;
-    position: static;
+    position: static !important;
     display: block;
-    margin: 0;
-    width: auto;
-    min-width: 140px;
+    margin: 20px auto 20px auto;
+    width: fit-content;
+    clear: both;
 }
 
 .clear-button:hover {
@@ -613,7 +608,8 @@ main {
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     background: white;
-    margin: 0;
+    margin-top: 8px;
+    margin-bottom: 60px;
     position: static;
     z-index: auto;
 }
@@ -744,7 +740,7 @@ main {
     background: #f8f9fa;
     border-radius: 10px;
     border: 2px dashed #dee2e6;
-    margin: 0;
+    margin-bottom: 60px;
 }
 
 /* Modal Styles */
