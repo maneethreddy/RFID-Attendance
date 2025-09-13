@@ -630,7 +630,7 @@ main {
 
 /* Column minimum widths to avoid shrinking; horizontal scroll handles overflow */
 .serial-table thead th:nth-child(1),
-.serial-table tbody td:nth-child(1) { min-width: 80px; }
+.serial-table tbody td:nth-child(1) { min-width: 20px; }
 .serial-table thead th:nth-child(2),
 .serial-table tbody td:nth-child(2) { min-width: 360px; }
 .serial-table thead th:nth-child(3),
