@@ -225,7 +225,7 @@ main {
     transition: all 0.3s ease;
     position: static !important;
     display: block;
-    margin: 20px auto 20px auto;
+    margin: -20px auto 20px auto;
     width: fit-content;
     clear: both;
 }
