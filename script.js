@@ -3,9 +3,13 @@ class NFCScanner {
     constructor() {
         this.isScanning = false;
         this.reader = null;
+        this.lastTagData = null; // Store the last scanned tag data
         this.initializeElements();
         this.bindEvents();
         this.checkNFCSupport();
+        
+        // Make this instance globally accessible for export functions
+        window.nfcScanner = this;
     }
 
     initializeElements() {
@@ -99,49 +103,13 @@ class NFCScanner {
                 throw new Error('Records data is not iterable');
             }
             
-            let displayData = `NFC Tag Detected!\n\n`;
+            // Create structured data object for technical display
+            const tagData = this.createStructuredTagData(event, records);
             
-            // Add technical tag information with HTML formatting
-            displayData += `<div class="tag-info">`;
-            displayData += this.getTagTechnicalInfo(event);
-            displayData += `</div>\n\n`;
+            // Store for export functionality
+            this.lastTagData = tagData;
             
-            // Add NDEF records information
-            displayData += `<div class="ndef-info">`;
-            displayData += `NDEF Records Information:\n`;
-            displayData += `Number of records: ${records.length}\n`;
-            displayData += `Timestamp: ${new Date().toLocaleString()}\n`;
-            displayData += `</div>\n\n`;
-            
-            if (records.length > 0) {
-                // Convert to array if it's not already to ensure forEach works
-                const recordsArray = Array.isArray(records) ? records : Array.from(records);
-                recordsArray.forEach((record, index) => {
-                    displayData += `<div class="record-info">`;
-                    displayData += `Record ${index + 1}:\n`;
-                    displayData += `- Type: ${record.recordType}\n`;
-                    displayData += `- TNF (Type Name Format): ${record.tnf}\n`;
-                    displayData += `- MIME Type: ${record.mediaType || 'N/A'}\n`;
-                    displayData += `- ID: ${record.id || 'N/A'}\n`;
-                    displayData += `- Data Length: ${record.data ? record.data.byteLength : 0} bytes\n`;
-                    
-                    // Parse data based on record type
-                    let parsedData = '';
-                    try {
-                        parsedData = this.parseRecordData(record);
-                    } catch (parseError) {
-                        console.error('Error parsing record data:', parseError);
-                        parsedData = `- Error parsing record: ${parseError.message}\n`;
-                    }
-                    displayData += parsedData;
-                    displayData += `</div>\n\n`;
-                });
-            } else {
-                displayData += `<div class="record-info">`;
-                displayData += `No NDEF records found on this tag.\n`;
-                displayData += `This tag may not be NDEF formatted or may be empty.\n`;
-                displayData += `</div>\n\n`;
-            }
+            let displayData = this.formatTechnicalDisplay(tagData);
 
             this.displayResults(displayData);
             this.updateUI('ready', 'Tag scanned successfully!');
@@ -177,6 +145,244 @@ class NFCScanner {
             
             this.showError(errorMessage);
         }
+    }
+
+    createStructuredTagData(event, records) {
+        const timestamp = new Date();
+        const tagData = {
+            scan_info: {
+                timestamp: timestamp.toISOString(),
+                timestamp_unix: Math.floor(timestamp.getTime() / 1000),
+                scanner_version: "1.0.0"
+            },
+            tag_technical: {
+                detected: true,
+                type: "Unknown",
+                technologies: [],
+                memory_info: null,
+                serial_number: null,
+                atqa: null,
+                sak: null,
+                max_size: null,
+                is_writable: null,
+                can_make_readonly: null
+            },
+            ndef_message: {
+                has_message: !!event.message,
+                record_count: records ? records.length : 0,
+                records: []
+            },
+            raw_data: {
+                event_keys: Object.keys(event || {}),
+                message_keys: event.message ? Object.keys(event.message) : []
+            }
+        };
+
+        // Try to extract technical information
+        try {
+            if (event.serialNumber) {
+                tagData.tag_technical.serial_number = this.formatSerialNumber(event.serialNumber);
+            }
+
+            if (event.tag) {
+                const tag = event.tag;
+                
+                if (tag.tech) {
+                    tagData.tag_technical.technologies = Array.from(tag.tech);
+                    tagData.tag_technical.type = this.determineTagType(tag.tech);
+                }
+                
+                if (tag.atqa !== undefined) {
+                    tagData.tag_technical.atqa = `0x${tag.atqa.toString(16).padStart(4, '0')}`;
+                }
+                
+                if (tag.sak !== undefined) {
+                    tagData.tag_technical.sak = `0x${tag.sak.toString(16).padStart(2, '0')}`;
+                }
+                
+                if (tag.maxSize !== undefined) {
+                    tagData.tag_technical.max_size = tag.maxSize;
+                    tagData.tag_technical.memory_info = this.getMemoryInfo(tag);
+                }
+                
+                if (tag.isWritable !== undefined) {
+                    tagData.tag_technical.is_writable = tag.isWritable;
+                }
+                
+                if (tag.canMakeReadOnly !== undefined) {
+                    tagData.tag_technical.can_make_readonly = tag.canMakeReadOnly;
+                }
+            }
+        } catch (error) {
+            tagData.tag_technical.error = error.message;
+        }
+
+        // Process NDEF records
+        if (records && records.length > 0) {
+            const recordsArray = Array.isArray(records) ? records : Array.from(records);
+            tagData.ndef_message.records = recordsArray.map((record, index) => {
+                return this.createStructuredRecord(record, index);
+            });
+        }
+
+        return tagData;
+    }
+
+    createStructuredRecord(record, index) {
+        const structuredRecord = {
+            index: index,
+            record_type: record.recordType || "unknown",
+            tnf: record.tnf || 0,
+            media_type: record.mediaType || null,
+            id: record.id || null,
+            data: {
+                byte_length: record.data ? record.data.byteLength : 0,
+                hex: null,
+                ascii: null,
+                parsed_content: null
+            },
+            parsing_error: null
+        };
+
+        // Process data
+        if (record.data && record.data.byteLength > 0) {
+            try {
+                const dataArray = Array.from(record.data);
+                structuredRecord.data.hex = dataArray
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join(' ');
+                
+                structuredRecord.data.ascii = dataArray
+                    .map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.')
+                    .join('');
+                
+                // Try to parse content
+                structuredRecord.data.parsed_content = this.parseRecordDataStructured(record);
+            } catch (error) {
+                structuredRecord.parsing_error = error.message;
+            }
+        }
+
+        return structuredRecord;
+    }
+
+    parseRecordDataStructured(record) {
+        if (!record || !record.data) return null;
+
+        const decoder = new TextDecoder();
+        const parsed = {
+            type: record.recordType,
+            content: null,
+            metadata: {}
+        };
+
+        try {
+            switch (record.recordType) {
+                case 'text':
+                    const statusByte = record.data[0];
+                    const languageCodeLength = statusByte & 0x3F;
+                    const encoding = (statusByte & 0x80) ? 'UTF-16' : 'UTF-8';
+                    const languageCode = decoder.decode(record.data.slice(1, 1 + languageCodeLength));
+                    const text = decoder.decode(record.data.slice(1 + languageCodeLength));
+                    
+                    parsed.content = text;
+                    parsed.metadata = { language: languageCode, encoding: encoding };
+                    break;
+                    
+                case 'url':
+                    const prefixCode = record.data[0];
+                    const urlPrefixes = [
+                        '', 'http://www.', 'https://www.', 'http://', 'https://',
+                        'tel:', 'mailto:', 'ftp://anonymous:anonymous@', 'ftp://ftp.',
+                        'ftps://', 'sftp://', 'smb://', 'nfs://', 'ftp://', 'dav://',
+                        'news:', 'telnet://', 'imap:', 'rtsp://', 'urn:', 'pop:',
+                        'sip:', 'sips:', 'tftp:', 'btspp://', 'btl2cap://', 'btgoep://',
+                        'tcpobex://', 'irdaobex://', 'file://', 'urn:epc:id:',
+                        'urn:epc:tag:', 'urn:epc:pat:', 'urn:epc:raw:', 'urn:epc:',
+                        'urn:nfc:'
+                    ];
+                    const prefix = urlPrefixes[prefixCode] || '';
+                    const url = decoder.decode(record.data.slice(1));
+                    
+                    parsed.content = prefix + url;
+                    parsed.metadata = { prefix_code: prefixCode };
+                    break;
+                    
+                default:
+                    try {
+                        parsed.content = decoder.decode(record.data);
+                    } catch (e) {
+                        parsed.content = null;
+                    }
+            }
+        } catch (error) {
+            parsed.content = null;
+            parsed.error = error.message;
+        }
+
+        return parsed;
+    }
+
+    formatTechnicalDisplay(tagData) {
+        let display = '';
+        
+        // Header with export options
+        display += `<div class="technical-header">`;
+        display += `<h3>📊 NFC Tag Technical Analysis</h3>`;
+        display += `<div class="export-buttons">`;
+        display += `<button onclick="window.nfcScanner.exportData('json')" class="export-btn">Export JSON</button>`;
+        display += `<button onclick="window.nfcScanner.exportData('csv')" class="export-btn">Export CSV</button>`;
+        display += `<button onclick="window.nfcScanner.exportData('raw')" class="export-btn">Copy Raw Data</button>`;
+        display += `</div>`;
+        display += `</div>\n\n`;
+
+        // JSON Preview
+        display += `<div class="json-section">`;
+        display += `<h4>🔧 Structured Data (JSON)</h4>`;
+        display += `<pre class="json-display">${JSON.stringify(tagData, null, 2)}</pre>`;
+        display += `</div>\n\n`;
+
+        // Quick Summary
+        display += `<div class="summary-section">`;
+        display += `<h4>📋 Quick Summary</h4>`;
+        display += `<table class="summary-table">`;
+        display += `<tr><td><strong>Scan Time:</strong></td><td>${tagData.scan_info.timestamp}</td></tr>`;
+        display += `<tr><td><strong>Tag Type:</strong></td><td>${tagData.tag_technical.type}</td></tr>`;
+        display += `<tr><td><strong>Technologies:</strong></td><td>${tagData.tag_technical.technologies.join(', ') || 'Unknown'}</td></tr>`;
+        display += `<tr><td><strong>Records Found:</strong></td><td>${tagData.ndef_message.record_count}</td></tr>`;
+        if (tagData.tag_technical.serial_number) {
+            display += `<tr><td><strong>Serial Number:</strong></td><td>${tagData.tag_technical.serial_number}</td></tr>`;
+        }
+        if (tagData.tag_technical.max_size) {
+            display += `<tr><td><strong>Memory Size:</strong></td><td>${tagData.tag_technical.max_size} bytes</td></tr>`;
+        }
+        display += `</table>`;
+        display += `</div>\n\n`;
+
+        // Record Details
+        if (tagData.ndef_message.records.length > 0) {
+            display += `<div class="records-section">`;
+            display += `<h4>📝 NDEF Records Detail</h4>`;
+            tagData.ndef_message.records.forEach((record, index) => {
+                display += `<div class="record-detail">`;
+                display += `<h5>Record ${index + 1}</h5>`;
+                display += `<table class="record-table">`;
+                display += `<tr><td><strong>Type:</strong></td><td>${record.record_type}</td></tr>`;
+                display += `<tr><td><strong>TNF:</strong></td><td>${record.tnf}</td></tr>`;
+                display += `<tr><td><strong>Data Length:</strong></td><td>${record.data.byte_length} bytes</td></tr>`;
+                if (record.data.hex) {
+                    display += `<tr><td><strong>Hex Data:</strong></td><td><code class="hex-data">${record.data.hex}</code></td></tr>`;
+                }
+                if (record.data.parsed_content && record.data.parsed_content.content) {
+                    display += `<tr><td><strong>Content:</strong></td><td>${record.data.parsed_content.content}</td></tr>`;
+                }
+                display += `</table>`;
+                display += `</div>`;
+            });
+            display += `</div>\n\n`;
+        }
+
+        return display;
     }
 
     getTagTechnicalInfo(event) {
@@ -649,6 +855,150 @@ class NFCScanner {
 
     hideError() {
         this.errorSection.style.display = 'none';
+    }
+
+    exportData(format) {
+        if (!this.lastTagData) {
+            alert('No tag data available to export. Please scan a tag first.');
+            return;
+        }
+
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        
+        switch (format) {
+            case 'json':
+                this.downloadJSON(this.lastTagData, `nfc-tag-data-${timestamp}.json`);
+                break;
+            case 'csv':
+                this.downloadCSV(this.lastTagData, `nfc-tag-data-${timestamp}.csv`);
+                break;
+            case 'raw':
+                this.copyToClipboard(JSON.stringify(this.lastTagData, null, 2));
+                break;
+            default:
+                alert('Unknown export format');
+        }
+    }
+
+    downloadJSON(data, filename) {
+        const jsonString = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        this.showSuccessMessage(`JSON data exported as ${filename}`);
+    }
+
+    downloadCSV(data, filename) {
+        let csv = 'Field,Value\n';
+        
+        // Add scan info
+        csv += `Timestamp,${data.scan_info.timestamp}\n`;
+        csv += `Unix Timestamp,${data.scan_info.timestamp_unix}\n`;
+        csv += `Scanner Version,${data.scan_info.scanner_version}\n`;
+        
+        // Add tag technical info
+        csv += `Tag Detected,${data.tag_technical.detected}\n`;
+        csv += `Tag Type,${data.tag_technical.type}\n`;
+        csv += `Technologies,"${data.tag_technical.technologies.join(', ')}"\n`;
+        csv += `Serial Number,${data.tag_technical.serial_number || 'N/A'}\n`;
+        csv += `ATQA,${data.tag_technical.atqa || 'N/A'}\n`;
+        csv += `SAK,${data.tag_technical.sak || 'N/A'}\n`;
+        csv += `Max Size,${data.tag_technical.max_size || 'N/A'}\n`;
+        csv += `Is Writable,${data.tag_technical.is_writable || 'N/A'}\n`;
+        csv += `Can Make Read-Only,${data.tag_technical.can_make_readonly || 'N/A'}\n`;
+        
+        // Add NDEF message info
+        csv += `Has NDEF Message,${data.ndef_message.has_message}\n`;
+        csv += `Record Count,${data.ndef_message.record_count}\n`;
+        
+        // Add records
+        data.ndef_message.records.forEach((record, index) => {
+            csv += `Record ${index + 1} Type,${record.record_type}\n`;
+            csv += `Record ${index + 1} TNF,${record.tnf}\n`;
+            csv += `Record ${index + 1} Data Length,${record.data.byte_length}\n`;
+            csv += `Record ${index + 1} Hex Data,"${record.data.hex || ''}"\n`;
+            csv += `Record ${index + 1} ASCII Data,"${record.data.ascii || ''}"\n`;
+            if (record.data.parsed_content && record.data.parsed_content.content) {
+                csv += `Record ${index + 1} Content,"${record.data.parsed_content.content}"\n`;
+            }
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        this.showSuccessMessage(`CSV data exported as ${filename}`);
+    }
+
+    copyToClipboard(text) {
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(() => {
+                this.showSuccessMessage('Raw data copied to clipboard!');
+            }).catch(() => {
+                this.fallbackCopyToClipboard(text);
+            });
+        } else {
+            this.fallbackCopyToClipboard(text);
+        }
+    }
+
+    fallbackCopyToClipboard(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            this.showSuccessMessage('Raw data copied to clipboard!');
+        } catch (err) {
+            alert('Failed to copy to clipboard. Please copy manually from the JSON display.');
+        }
+        
+        document.body.removeChild(textArea);
+    }
+
+    showSuccessMessage(message) {
+        // Create a temporary success message
+        const successDiv = document.createElement('div');
+        successDiv.className = 'success-message';
+        successDiv.textContent = message;
+        successDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        `;
+        
+        document.body.appendChild(successDiv);
+        
+        setTimeout(() => {
+            document.body.removeChild(successDiv);
+        }, 3000);
     }
 }
 
