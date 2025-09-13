@@ -28,6 +28,7 @@ class NFCScanner {
         this.dataDisplay = document.getElementById('dataDisplay');
         this.errorSection = document.getElementById('errorSection');
         this.errorMessage = document.getElementById('errorMessage');
+        this.clearSection = document.getElementById('clearSection');
         this.clearButton = document.getElementById('clearButton');
         this.csvInput = document.getElementById('csvInput');
         
@@ -1139,6 +1140,14 @@ class NFCScanner {
     displayResults(data) {
         this.dataDisplay.innerHTML = data;
         this.resultsSection.style.display = 'block';
+        
+        // Show clear section only if there are serial numbers
+        if (this.serialNumbers.length > 0) {
+            this.clearSection.style.display = 'block';
+        } else {
+            this.clearSection.style.display = 'none';
+        }
+        
         this.resultsSection.scrollIntoView({ behavior: 'smooth' });
     }
 
@@ -1150,6 +1159,7 @@ class NFCScanner {
         // Clear the UI
         this.dataDisplay.textContent = '';
         this.resultsSection.style.display = 'none';
+        this.clearSection.style.display = 'none';
         
         // Update status
         if (this.isScanning) {
