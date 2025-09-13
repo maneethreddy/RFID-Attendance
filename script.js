@@ -28,7 +28,6 @@ class NFCScanner {
         this.dataDisplay = document.getElementById('dataDisplay');
         this.errorSection = document.getElementById('errorSection');
         this.errorMessage = document.getElementById('errorMessage');
-        this.clearButton = document.getElementById('clearButton');
         this.csvInput = document.getElementById('csvInput');
         
         // Modal elements
@@ -43,7 +42,6 @@ class NFCScanner {
 
     bindEvents() {
         this.scanButton.addEventListener('click', () => this.toggleScanning());
-        this.clearButton.addEventListener('click', () => this.clearResults());
         if (this.csvInput) {
             this.csvInput.addEventListener('change', (e) => this.handleCSVImport(e));
         }
@@ -1140,25 +1138,6 @@ class NFCScanner {
         this.dataDisplay.innerHTML = data;
         this.resultsSection.style.display = 'block';
         this.resultsSection.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    clearResults() {
-        // Clear the actual data
-        this.serialNumbers = [];
-        this.lastTagData = null;
-        
-        // Clear the UI
-        this.dataDisplay.textContent = '';
-        this.resultsSection.style.display = 'none';
-        
-        // Update status
-        if (this.isScanning) {
-            this.updateUI('scanning', 'Scanning for NFC tags...');
-        } else {
-        this.updateUI('ready', 'Ready to scan');
-        }
-        
-        this.showSuccessMessage('All data cleared');
     }
 
     showError(message) {
