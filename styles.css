@@ -167,8 +167,42 @@ main {
     font-family: 'Courier New', monospace;
     white-space: pre-wrap;
     word-break: break-all;
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
+    line-height: 1.4;
+}
+
+.data-display h3 {
+    color: #495057;
+    margin: 15px 0 10px 0;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 5px;
+}
+
+.data-display .tag-info {
+    background: #e3f2fd;
+    border-left: 4px solid #2196f3;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+}
+
+.data-display .ndef-info {
+    background: #f3e5f5;
+    border-left: 4px solid #9c27b0;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+}
+
+.data-display .record-info {
+    background: #fff3e0;
+    border-left: 4px solid #ff9800;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
 }
 
 .clear-button {

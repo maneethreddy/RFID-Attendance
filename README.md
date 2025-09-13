@@ -33,12 +33,31 @@ A simple HTML, CSS, and JavaScript application that uses the device's built-in N
    - Data includes record type, content, and metadata
    - Use "Clear Results" to reset
 
-## Supported NFC Tag Types
+## Supported NFC Record Types
 
-- **Text Records**: Plain text content
-- **URL Records**: Web links and URLs
-- **MIME Records**: Various data formats
-- **Other Records**: Raw data display
+### Standard NDEF Record Types
+- **Empty Records**: Empty NDEF records
+- **Text Records**: Plain text with language and encoding detection
+- **URL Records**: Web links with prefix code support (35+ URL prefixes)
+- **MIME Records**: Various data formats with JSON parsing
+- **Smart Poster Records**: Multi-record containers
+- **Absolute URI Records**: Complete URI references
+- **External Records**: Custom application data
+
+### Well-Known Record Types
+- **Wi-Fi Configuration**: WPS (Wi-Fi Protected Setup) data
+- **Bluetooth Configuration**: Bluetooth pairing data
+- **vCard Records**: Contact information
+- **Android Application Records**: App installation data
+- **Generic Well-Known**: Any well-known type with proper parsing
+
+### Advanced Features
+- **TNF (Type Name Format) Detection**: Identifies record structure
+- **Language Detection**: For text records (UTF-8/UTF-16)
+- **URL Prefix Expansion**: Converts prefix codes to full URLs
+- **JSON Parsing**: Pretty-prints JSON MIME content
+- **Raw Data Fallback**: Hex and ASCII display for unknown formats
+- **Error Handling**: Graceful handling of parsing errors
 
 ## Browser Compatibility
 
