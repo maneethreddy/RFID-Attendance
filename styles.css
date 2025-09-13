@@ -594,10 +594,11 @@ main {
 
 .serial-table {
     width: 100%;
-    min-width: 100%;
+    min-width: 320px;
     border-collapse: collapse;
-    font-size: 1rem;
+    font-size: 0.9rem;
     background: white;
+    table-layout: fixed;
 }
 
 .serial-table thead {
@@ -605,14 +606,17 @@ main {
 }
 
 .serial-table th {
-    padding: 12px 8px;
-    text-align: left;
+    padding: 8px 4px;
+    text-align: center;
     font-weight: 700;
     color: #495057;
     border-bottom: 2px solid #dee2e6;
-    font-size: 1rem;
+    font-size: 0.75rem;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+    word-wrap: break-word;
+    hyphens: auto;
+    line-height: 1.2;
 }
 
 .serial-table td {
@@ -632,37 +636,41 @@ main {
 }
 
 .number-cell {
-    width: 15%;
+    width: 12%;
     text-align: center;
     font-weight: bold;
     color: #4CAF50;
-    font-size: 1.1rem;
-    padding: 12px 8px;
+    font-size: 0.95rem;
+    padding: 8px 2px;
 }
 
 .serial-cell {
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-weight: bold;
     color: #333;
-    letter-spacing: 1px;
-    font-size: 1.1rem;
-    width: 35%;
-    padding: 12px 8px;
+    letter-spacing: 0.5px;
+    font-size: 0.85rem;
+    width: 40%;
+    padding: 8px 4px;
     word-break: break-all;
+    text-align: center;
 }
 
 .time-cell {
     color: #666;
-    font-size: 0.9rem;
-    width: 35%;
-    padding: 12px 8px;
+    font-size: 0.75rem;
+    width: 36%;
+    padding: 8px 4px;
     word-wrap: break-word;
+    text-align: center;
+    line-height: 1.3;
 }
 
 .count-cell {
-    width: 15%;
+    width: 12%;
     text-align: center;
-    padding: 12px 8px;
+    padding: 8px 2px;
+    font-size: 0.9rem;
 }
 
 .count-badge {

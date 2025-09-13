@@ -122,15 +122,15 @@ class NFCScanner {
                 if (!this.serialNumbers.some(entry => entry.serial === serialNumber)) {
                     this.serialNumbers.push({
                         serial: serialNumber,
-                        timestamp: new Date().toLocaleString(),
+                        timestamp: new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}),
                         scan_count: 1
                     });
                     this.showSuccessMessage(`New serial number added: ${serialNumber}`);
-            } else {
+                } else {
                     // Increment scan count if already exists
                     const existing = this.serialNumbers.find(entry => entry.serial === serialNumber);
                     existing.scan_count++;
-                    existing.timestamp = new Date().toLocaleString(); // Update last seen
+                    existing.timestamp = new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}); // Update last seen
                     this.showSuccessMessage(`Serial number rescanned: ${serialNumber} (${existing.scan_count} times)`);
                 }
                 
@@ -223,8 +223,8 @@ class NFCScanner {
             display += `<thead>`;
             display += `<tr>`;
             display += `<th>No.</th>`;
-            display += `<th>Tag Serial Number</th>`;
-            display += `<th>Scanned At</th>`;
+            display += `<th>Serial</th>`;
+            display += `<th>Time</th>`;
             display += `<th>Count</th>`;
             display += `</tr>`;
             display += `</thead>`;
@@ -262,7 +262,7 @@ class NFCScanner {
         }
         
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        let csv = 'No.,Tag Serial Number,Scanned At,Scan Count\n';
+        let csv = 'No.,Serial,Time,Count\n';
         
         this.serialNumbers.forEach((entry, index) => {
             csv += `${String(index + 1).padStart(3, '0')},${entry.serial},${entry.timestamp},${entry.scan_count}\n`;
