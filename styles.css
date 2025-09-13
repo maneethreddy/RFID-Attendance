@@ -214,6 +214,9 @@ main {
     cursor: pointer;
     font-weight: 600;
     transition: all 0.3s ease;
+    position: static !important;
+    display: inline-block;
+    margin-top: 12px;
 }
 
 .clear-button:hover {
@@ -619,6 +622,18 @@ main {
     line-height: 1.2;
 }
 
+/* Explicit column widths (No., Roll, Serial, Time, Count) */
+.serial-table thead th:nth-child(1),
+.serial-table tbody td:nth-child(1) { width: 8%; }
+.serial-table thead th:nth-child(2),
+.serial-table tbody td:nth-child(2) { width: 60%; }
+.serial-table thead th:nth-child(3),
+.serial-table tbody td:nth-child(3) { width: 16%; }
+.serial-table thead th:nth-child(4),
+.serial-table tbody td:nth-child(4) { width: 12%; }
+.serial-table thead th:nth-child(5),
+.serial-table tbody td:nth-child(5) { width: 8%; }
+
 .serial-table td {
     padding: 12px;
     border-bottom: 1px solid #e9ecef;
@@ -636,31 +651,27 @@ main {
 }
 
 .number-cell {
-    width: 40%;
+    width: 8%;
     text-align: center;
     font-weight: bold;
     color: #4CAF50;
-    font-size: 1rem;
-    font-weight: bold;
-    word-break: break-all;
-    text-align: center;
+    font-size: 0.95rem;
     padding: 8px 2px;
 }
 
 .serial-cell {
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    
     color: #333;
     letter-spacing: 0.5px;
-    font-size: 0.65rem;
-    width: 20%;
+    font-size: 0.85rem;
+    width: 16%;
     padding: 8px 4px;
     word-break: break-all;
     text-align: center;
 }
 
 .roll-cell {
-    width: 20%;
+    width: 60%;
     text-align: center;
     font-size: 0.85rem;
     padding: 8px 4px;
@@ -670,7 +681,7 @@ main {
 .time-cell {
     color: #666;
     font-size: 0.75rem;
-    width: 36%;
+    width: 12%;
     padding: 8px 4px;
     word-wrap: break-word;
     text-align: center;
@@ -678,7 +689,7 @@ main {
 }
 
 .count-cell {
-    width: 12%;
+    width: 8%;
     text-align: center;
     padding: 8px 2px;
     font-size: 0.9rem;
