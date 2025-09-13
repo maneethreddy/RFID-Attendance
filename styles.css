@@ -14,9 +14,9 @@ body {
 }
 
 .container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
+    max-width: 100%;
+    margin: 0;
+    padding: 10px;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -330,11 +330,14 @@ main {
     background: #007bff;
     color: white;
     border: none;
-    padding: 8px 16px;
-    border-radius: 5px;
+    padding: 12px 20px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 1rem;
+    font-weight: 600;
     transition: all 0.3s ease;
+    flex: 1;
+    min-height: 44px;
 }
 
 .export-btn:hover {
@@ -520,58 +523,59 @@ main {
     }
 }
 
-/* Minimal scan status display */
+/* Minimal scan status display - Mobile First */
 .scan-status {
     background: #f8f9fa;
     border-left: 4px solid #4CAF50;
-    padding: 12px 20px;
-    margin-bottom: 20px;
-    border-radius: 5px;
+    padding: 15px;
+    margin: 0 0 15px 0;
+    border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    width: 100%;
 }
 
 .status-text {
-    font-size: 1rem;
+    font-size: 1.1rem;
     color: #333;
-    font-weight: 500;
+    font-weight: 600;
+    text-align: center;
 }
 
-.serial-list {
-    background: white;
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-.list-header {
+.table-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding: 0 0 15px 0;
     border-bottom: 2px solid #e9ecef;
 }
 
-.list-header h3 {
+.table-header h3 {
     margin: 0;
     color: #333;
-    font-size: 1.3rem;
+    font-size: 1.4rem;
+    text-align: center;
 }
 
-.list-controls {
+.table-controls {
     display: flex;
     gap: 10px;
+    justify-content: center;
+    width: 100%;
 }
 
 .clear-btn {
     background: #dc3545;
     color: white;
     border: none;
-    padding: 8px 16px;
-    border-radius: 5px;
+    padding: 12px 20px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 1rem;
+    font-weight: 600;
     transition: all 0.3s ease;
+    flex: 1;
+    min-height: 44px;
 }
 
 .clear-btn:hover {
@@ -579,17 +583,20 @@ main {
     transform: translateY(-2px);
 }
 
-.table-container {
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
     border: 1px solid #dee2e6;
     border-radius: 8px;
-    overflow: hidden;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    background: white;
 }
 
 .serial-table {
     width: 100%;
+    min-width: 100%;
     border-collapse: collapse;
-    font-size: 0.95rem;
+    font-size: 1rem;
     background: white;
 }
 
@@ -598,12 +605,12 @@ main {
 }
 
 .serial-table th {
-    padding: 15px 12px;
+    padding: 12px 8px;
     text-align: left;
-    font-weight: 600;
+    font-weight: 700;
     color: #495057;
     border-bottom: 2px solid #dee2e6;
-    font-size: 0.9rem;
+    font-size: 1rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -625,11 +632,12 @@ main {
 }
 
 .number-cell {
-    width: 50px;
+    width: 15%;
     text-align: center;
     font-weight: bold;
     color: #4CAF50;
-    font-size: 0.9rem;
+    font-size: 1.1rem;
+    padding: 12px 8px;
 }
 
 .serial-cell {
@@ -637,20 +645,24 @@ main {
     font-weight: bold;
     color: #333;
     letter-spacing: 1px;
-    font-size: 1rem;
-    min-width: 120px;
+    font-size: 1.1rem;
+    width: 35%;
+    padding: 12px 8px;
+    word-break: break-all;
 }
 
 .time-cell {
     color: #666;
     font-size: 0.9rem;
-    white-space: nowrap;
-    min-width: 140px;
+    width: 35%;
+    padding: 12px 8px;
+    word-wrap: break-word;
 }
 
 .count-cell {
-    width: 80px;
+    width: 15%;
     text-align: center;
+    padding: 12px 8px;
 }
 
 .count-badge {
@@ -673,61 +685,67 @@ main {
     border: 2px dashed #dee2e6;
 }
 
-/* Responsive adjustments for serial display */
-@media (max-width: 768px) {
+/* Desktop adjustments (mobile-first design) */
+@media (min-width: 768px) {
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
     .scan-status {
-        padding: 10px 15px;
-        margin-bottom: 15px;
+        padding: 12px 20px;
+        margin-bottom: 20px;
     }
     
     .status-text {
+        font-size: 1rem;
+        text-align: left;
+    }
+    
+    .table-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .table-header h3 {
+        text-align: left;
+    }
+    
+    .table-controls {
+        justify-content: flex-end;
+        width: auto;
+    }
+    
+    .export-btn,
+    .clear-btn {
+        flex: none;
+        padding: 8px 16px;
         font-size: 0.9rem;
-    }
-    
-    .list-header {
-        flex-direction: column;
-        gap: 15px;
-        align-items: stretch;
-    }
-    
-    .list-controls {
-        justify-content: center;
+        min-height: auto;
     }
     
     .serial-table {
-        font-size: 0.85rem;
-    }
-    
-    .serial-table th,
-    .serial-table td {
-        padding: 10px 8px;
-    }
-    
-    .serial-table th {
-        font-size: 0.8rem;
+        min-width: 600px;
     }
     
     .number-cell {
-        width: 40px;
-        font-size: 0.8rem;
+        width: 80px;
+        font-size: 1rem;
     }
     
     .serial-cell {
-        font-size: 0.85rem;
-        min-width: 100px;
+        width: 200px;
+        font-size: 1.1rem;
     }
     
     .time-cell {
-        font-size: 0.75rem;
-        min-width: 110px;
+        width: 220px;
+        font-size: 0.95rem;
     }
     
     .count-cell {
-        width: 50px;
-    }
-    
-    .count-badge {
-        padding: 2px 8px;
-        font-size: 0.75rem;
+        width: 100px;
     }
 }

@@ -208,18 +208,17 @@ class NFCScanner {
         }
         display += `</div>\n\n`;
         
-        // Sequential numbers table
-        display += `<div class="serial-list">`;
-        display += `<div class="list-header">`;
+        // Full width table header
+        display += `<div class="table-header">`;
         display += `<h3>📋 Scanned Tags (${this.serialNumbers.length})</h3>`;
-        display += `<div class="list-controls">`;
+        display += `<div class="table-controls">`;
         display += `<button onclick="window.nfcScanner.exportSerialList()" class="export-btn">Export List</button>`;
         display += `<button onclick="window.nfcScanner.clearSerialList()" class="clear-btn">Clear List</button>`;
         display += `</div>`;
         display += `</div>`;
         
         if (this.serialNumbers.length > 0) {
-            display += `<div class="table-container">`;
+            display += `<div class="table-wrapper">`;
             display += `<table class="serial-table">`;
             display += `<thead>`;
             display += `<tr>`;
@@ -252,8 +251,6 @@ class NFCScanner {
         } else {
             display += `<div class="no-entries">No tags scanned yet.</div>`;
         }
-        
-        display += `</div>`;
         
         return display;
     }
