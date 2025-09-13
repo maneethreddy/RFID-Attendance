@@ -519,3 +519,199 @@ main {
         padding: 15px;
     }
 }
+
+/* Serial number display styles */
+.current-serial {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+    padding: 25px;
+    border-radius: 15px;
+    text-align: center;
+    margin-bottom: 25px;
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
+}
+
+.current-serial h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.3rem;
+    opacity: 0.9;
+}
+
+.serial-number {
+    font-size: 2rem;
+    font-weight: bold;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    letter-spacing: 2px;
+    margin: 10px 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.scan-time {
+    font-size: 0.95rem;
+    opacity: 0.8;
+    margin-top: 10px;
+}
+
+.scanning-status {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-top: 8px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    display: inline-block;
+    animation: pulse 2s infinite;
+}
+
+.serial-list {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.list-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.3rem;
+}
+
+.list-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.clear-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.clear-btn:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+}
+
+.serial-entries {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.serial-entry {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.3s ease;
+}
+
+.serial-entry:hover {
+    border-color: #4CAF50;
+    transform: translateX(5px);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.entry-number {
+    background: #4CAF50;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.entry-serial {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #333;
+    letter-spacing: 1px;
+    flex: 1;
+}
+
+.entry-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.entry-time {
+    font-style: italic;
+}
+
+.entry-count {
+    background: #ff9800;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.no-entries {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    padding: 30px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 2px dashed #dee2e6;
+}
+
+/* Responsive adjustments for serial display */
+@media (max-width: 768px) {
+    .serial-number {
+        font-size: 1.5rem;
+        letter-spacing: 1px;
+    }
+    
+    .list-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+    
+    .list-controls {
+        justify-content: center;
+    }
+    
+    .serial-entry {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+    
+    .entry-info {
+        align-items: center;
+    }
+    
+    .entry-serial {
+        font-size: 1rem;
+    }
+}

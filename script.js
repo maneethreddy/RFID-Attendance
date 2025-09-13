@@ -4,6 +4,7 @@ class NFCScanner {
         this.isScanning = false;
         this.reader = null;
         this.lastTagData = null; // Store the last scanned tag data
+        this.serialNumbers = []; // Store list of scanned serial numbers
         this.initializeElements();
         this.bindEvents();
         this.checkNFCSupport();
@@ -103,21 +104,35 @@ class NFCScanner {
                 throw new Error('Records data is not iterable');
             }
             
-            // Create structured data object for technical display
-            const tagData = this.createStructuredTagData(event, records);
+            // Extract serial number from the tag data
+            const serialNumber = this.extractSerialNumber(event);
             
-            // Store for export functionality
-            this.lastTagData = tagData;
+            if (serialNumber) {
+                // Add to serial numbers list if not already present
+                if (!this.serialNumbers.some(entry => entry.serial === serialNumber)) {
+                    this.serialNumbers.push({
+                        serial: serialNumber,
+                        timestamp: new Date().toLocaleString(),
+                        scan_count: 1
+                    });
+                    this.showSuccessMessage(`New serial number added: ${serialNumber}`);
+                } else {
+                    // Increment scan count if already exists
+                    const existing = this.serialNumbers.find(entry => entry.serial === serialNumber);
+                    existing.scan_count++;
+                    existing.timestamp = new Date().toLocaleString(); // Update last seen
+                    this.showSuccessMessage(`Serial number rescanned: ${serialNumber} (${existing.scan_count} times)`);
+                }
+                
+                let displayData = this.formatSerialDisplay(serialNumber);
+                this.displayResults(displayData);
+                this.updateUI('scanning', `Scanning... (${this.serialNumbers.length} serial numbers found)`);
+            } else {
+                this.showError('No serial number found on this NFC tag.');
+                // Don't change the scanning status, keep scanning
+            }
             
-            let displayData = this.formatTechnicalDisplay(tagData);
-
-            this.displayResults(displayData);
-            this.updateUI('ready', 'Tag scanned successfully!');
-            
-            // Auto-stop scanning after successful read
-            setTimeout(() => {
-                this.stopScanning();
-            }, 2000);
+            // Continue scanning - don't auto-stop
 
         } catch (error) {
             console.error('Error processing NFC data:', error);
@@ -144,6 +159,124 @@ class NFCScanner {
             }
             
             this.showError(errorMessage);
+        }
+    }
+
+    extractSerialNumber(event) {
+        try {
+            // Try to get serial number from various sources
+            if (event.serialNumber) {
+                return this.formatSerialNumber(event.serialNumber);
+            }
+            
+            // Try to extract from tag object if available
+            if (event.tag && event.tag.serialNumber) {
+                return this.formatSerialNumber(event.tag.serialNumber);
+            }
+            
+            // Try to get from message if it contains serial info
+            if (event.message && event.message.serialNumber) {
+                return this.formatSerialNumber(event.message.serialNumber);
+            }
+            
+            return null;
+        } catch (error) {
+            console.error('Error extracting serial number:', error);
+            return null;
+        }
+    }
+
+    formatSerialDisplay(serialNumber) {
+        let display = '';
+        
+        // Current scan info
+        display += `<div class="current-serial">`;
+        if (this.isScanning) {
+            display += `<h3>📡 Continuous Scanning Active</h3>`;
+            display += `<div class="serial-number">${serialNumber}</div>`;
+            display += `<div class="scan-time">Last scanned: ${new Date().toLocaleString()}</div>`;
+            display += `<div class="scanning-status">Keep scanning tags to add them to the list below</div>`;
+        } else {
+            display += `<h3>📱 Last Scanned</h3>`;
+            display += `<div class="serial-number">${serialNumber}</div>`;
+            display += `<div class="scan-time">Scanned at: ${new Date().toLocaleString()}</div>`;
+        }
+        display += `</div>\n\n`;
+        
+        // Serial numbers list
+        display += `<div class="serial-list">`;
+        display += `<div class="list-header">`;
+        display += `<h3>📋 Scanned Serial Numbers (${this.serialNumbers.length})</h3>`;
+        display += `<div class="list-controls">`;
+        display += `<button onclick="window.nfcScanner.exportSerialList()" class="export-btn">Export List</button>`;
+        display += `<button onclick="window.nfcScanner.clearSerialList()" class="clear-btn">Clear List</button>`;
+        display += `</div>`;
+        display += `</div>`;
+        
+        if (this.serialNumbers.length > 0) {
+            display += `<div class="serial-entries">`;
+            this.serialNumbers.forEach((entry, index) => {
+                display += `<div class="serial-entry">`;
+                display += `<div class="entry-number">#${index + 1}</div>`;
+                display += `<div class="entry-serial">${entry.serial}</div>`;
+                display += `<div class="entry-info">`;
+                display += `<span class="entry-time">Last seen: ${entry.timestamp}</span>`;
+                if (entry.scan_count > 1) {
+                    display += `<span class="entry-count">Scanned ${entry.scan_count} times</span>`;
+                }
+                display += `</div>`;
+                display += `</div>`;
+            });
+            display += `</div>`;
+        } else {
+            display += `<div class="no-entries">No serial numbers scanned yet.</div>`;
+        }
+        
+        display += `</div>`;
+        
+        return display;
+    }
+
+    exportSerialList() {
+        if (this.serialNumbers.length === 0) {
+            alert('No serial numbers to export.');
+            return;
+        }
+        
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        let csv = 'Serial Number,First Scanned,Last Seen,Scan Count\n';
+        
+        this.serialNumbers.forEach(entry => {
+            csv += `${entry.serial},${entry.timestamp},${entry.timestamp},${entry.scan_count}\n`;
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `nfc-serial-numbers-${timestamp}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        this.showSuccessMessage(`Serial numbers exported as CSV`);
+    }
+
+    clearSerialList() {
+        if (this.serialNumbers.length === 0) {
+            alert('No serial numbers to clear.');
+            return;
+        }
+        
+        if (confirm(`Are you sure you want to clear all ${this.serialNumbers.length} serial numbers?`)) {
+            this.serialNumbers = [];
+            // Refresh display if results are visible
+            if (this.resultsSection.style.display !== 'none') {
+                this.displayResults('<div class="no-entries">Serial number list cleared.</div>');
+            }
+            this.showSuccessMessage('Serial number list cleared');
         }
     }
 
@@ -844,7 +977,11 @@ class NFCScanner {
     clearResults() {
         this.dataDisplay.textContent = '';
         this.resultsSection.style.display = 'none';
-        this.updateUI('ready', 'Ready to scan');
+        if (this.isScanning) {
+            this.updateUI('scanning', 'Scanning for NFC tags...');
+        } else {
+            this.updateUI('ready', 'Ready to scan');
+        }
     }
 
     showError(message) {
@@ -997,8 +1134,10 @@ class NFCScanner {
         document.body.appendChild(successDiv);
         
         setTimeout(() => {
-            document.body.removeChild(successDiv);
-        }, 3000);
+            if (document.body.contains(successDiv)) {
+                document.body.removeChild(successDiv);
+            }
+        }, 1500); // Shorter duration for continuous scanning
     }
 }
 
