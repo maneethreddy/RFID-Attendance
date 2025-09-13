@@ -7,9 +7,12 @@ class NFCScanner {
         this.serialNumbers = []; // Store list of scanned serial numbers
         this.lastScanTime = 0; // Track last scan time to avoid duplicates
         this.scanDelay = 1500; // 1 second delay between scans
+        this.serialToRollMap = new Map(); // Map: serial -> roll number
         this.initializeElements();
         this.bindEvents();
         this.checkNFCSupport();
+        // Load static CSV mapping from project on startup
+        this.loadProjectCSVMapping();
         
         // Make this instance globally accessible for export functions
         window.nfcScanner = this;
@@ -24,11 +27,99 @@ class NFCScanner {
         this.errorSection = document.getElementById('errorSection');
         this.errorMessage = document.getElementById('errorMessage');
         this.clearButton = document.getElementById('clearButton');
+        this.csvInput = document.getElementById('csvInput');
     }
 
     bindEvents() {
         this.scanButton.addEventListener('click', () => this.toggleScanning());
         this.clearButton.addEventListener('click', () => this.clearResults());
+        if (this.csvInput) {
+            this.csvInput.addEventListener('change', (e) => this.handleCSVImport(e));
+        }
+    }
+
+    // Programmatic trigger for choosing CSV file (can be attached to a button later)
+    promptCSVImport() {
+        if (this.csvInput) {
+            this.csvInput.click();
+        }
+    }
+
+    async loadProjectCSVMapping() {
+        // Default expected file in project root
+        const defaultPathCandidates = [
+            'rolls.csv',
+            'mapping.csv',
+            'serial_rolls.csv',
+            'data/rolls.csv'
+        ];
+        for (const path of defaultPathCandidates) {
+            try {
+                const res = await fetch(path, { cache: 'no-store' });
+                if (!res.ok) continue;
+                const text = await res.text();
+                this.parseAndStoreCSV(text);
+                console.log(`Loaded roll mapping from ${path}`);
+                return;
+            } catch (e) {
+                // try next candidate
+            }
+        }
+        console.warn('No roll mapping CSV found in project. Place a CSV (e.g., rolls.csv) in the project root with headers: Serial,Roll');
+    }
+
+    async reloadProjectCSVMapping() {
+        this.serialToRollMap.clear();
+        await this.loadProjectCSVMapping();
+        const latestSerial = this.serialNumbers.length ? this.serialNumbers[this.serialNumbers.length - 1].serial : '';
+        this.displayResults(this.formatSerialDisplay(latestSerial));
+        this.showSuccessMessage('Roll mapping reloaded');
+    }
+
+    async handleCSVImport(event) {
+        try {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const text = await file.text();
+            this.parseAndStoreCSV(text);
+            this.showSuccessMessage('CSV imported successfully');
+            // Rerender table to include roll numbers if any exist
+            const latestSerial = this.serialNumbers.length ? this.serialNumbers[this.serialNumbers.length - 1].serial : '';
+            this.displayResults(this.formatSerialDisplay(latestSerial));
+        } catch (err) {
+            console.error('CSV import failed:', err);
+            this.showError('Failed to import CSV. Ensure it has columns: Serial,Roll');
+        } finally {
+            // reset input so the same file can be selected again later
+            if (this.csvInput) this.csvInput.value = '';
+        }
+    }
+
+    parseAndStoreCSV(csvText) {
+        // Expect headers like: Serial,Roll or serial_number,roll_number (case-insensitive)
+        const lines = csvText.split(/\r?\n/).filter(l => l.trim().length > 0);
+        if (lines.length === 0) return;
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+        const serialIdx = headers.findIndex(h => ['serial','serialnumber','serial_number','tagserial','tag_serial'].includes(h));
+        const rollIdx = headers.findIndex(h => ['roll','rollnumber','roll_number','rollno','roll_no'].includes(h));
+        if (serialIdx === -1 || rollIdx === -1) throw new Error('CSV missing Serial and Roll headers');
+
+        for (let i = 1; i < lines.length; i++) {
+            const cols = lines[i].split(',');
+            if (cols.length <= Math.max(serialIdx, rollIdx)) continue;
+            const serial = this.normalizeSerial(cols[serialIdx]);
+            const roll = cols[rollIdx].trim();
+            if (serial && roll) {
+                this.serialToRollMap.set(serial, roll);
+            }
+        }
+    }
+
+    normalizeSerial(value) {
+        if (!value) return '';
+        const s = value.trim().replace(/\s+/g, '').replace(/-/g, ':');
+        // ensure uppercase and colon-separated if already contains separators
+        return s.toUpperCase();
     }
 
     checkNFCSupport() {
@@ -223,6 +314,7 @@ class NFCScanner {
             display += `<thead>`;
             display += `<tr>`;
             display += `<th>No.</th>`;
+            display += `<th>Roll</th>`;
             display += `<th>Serial</th>`;
             display += `<th>Time</th>`;
             display += `<th>Count</th>`;
@@ -233,6 +325,8 @@ class NFCScanner {
             this.serialNumbers.forEach((entry, index) => {
                 display += `<tr>`;
                 display += `<td class="number-cell">${String(index + 1).padStart(3, '0')}</td>`;
+                const roll = this.serialToRollMap.get(this.normalizeSerial(entry.serial)) || '';
+                display += `<td class="roll-cell">${roll}</td>`;
                 display += `<td class="serial-cell">${entry.serial}</td>`;
                 display += `<td class="time-cell">${entry.timestamp}</td>`;
                 display += `<td class="count-cell">`;
@@ -262,10 +356,11 @@ class NFCScanner {
         }
         
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        let csv = 'No.,Serial,Time,Count\n';
+        let csv = 'No.,Roll,Serial,Time,Count\n';
         
         this.serialNumbers.forEach((entry, index) => {
-            csv += `${String(index + 1).padStart(3, '0')},${entry.serial},${entry.timestamp},${entry.scan_count}\n`;
+            const roll = this.serialToRollMap.get(this.normalizeSerial(entry.serial)) || '';
+            csv += `${String(index + 1).padStart(3, '0')},${roll},${entry.serial},${entry.timestamp},${entry.scan_count}\n`;
         });
         
         const blob = new Blob([csv], { type: 'text/csv' });
