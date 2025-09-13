@@ -630,9 +630,9 @@ main {
 
 /* Column minimum widths to avoid shrinking; horizontal scroll handles overflow */
 .serial-table thead th:nth-child(1),
-.serial-table tbody td:nth-child(1) { min-width: 20px; }
+.serial-table tbody td:nth-child(1) { min-width: 36px; }
 .serial-table thead th:nth-child(2),
-.serial-table tbody td:nth-child(2) { min-width: 360px; }
+.serial-table tbody td:nth-child(2) { min-width: 280px; }
 .serial-table thead th:nth-child(3),
 .serial-table tbody td:nth-child(3) { min-width: 200px; }
 .serial-table thead th:nth-child(4),
@@ -675,7 +675,7 @@ main {
 }
 
 .roll-cell {
-    min-width: 360px;
+    min-width: 280px;
     text-align: center;
     font-size: 0.85rem;
     padding: 8px 4px;
@@ -764,7 +764,7 @@ main {
     }
     
     .number-cell {
-        width: 20px;
+        width: 36px;
         font-size: 1rem;
     }
     
