@@ -135,7 +135,8 @@ class NFCScanner {
                 }
                 
                 let displayData = this.formatSerialDisplay(serialNumber);
-            this.displayResults(displayData);
+                displayData += this.formatTableDisplay();
+                this.displayResults(displayData);
                 this.updateUI('scanning', `Scanning... (${this.serialNumbers.length} serial numbers found)`);
             } else {
                 this.showError('No serial number found on this NFC tag.');
@@ -207,6 +208,12 @@ class NFCScanner {
             display += `<span class="status-text">📱 Ready to scan (${this.serialNumbers.length} tags total)</span>`;
         }
         display += `</div>\n\n`;
+        
+        return display;
+    }
+
+    formatTableDisplay() {
+        let display = '';
         
         // Full width table header
         display += `<div class="table-header">`;
