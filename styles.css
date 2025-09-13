@@ -645,13 +645,15 @@ main {
 .serial-table thead th:nth-child(1),
 .serial-table tbody td:nth-child(1) { min-width: 50px; }
 .serial-table thead th:nth-child(2),
-.serial-table tbody td:nth-child(2) { min-width: 280px; }
+.serial-table tbody td:nth-child(2) { min-width: 200px; }
 .serial-table thead th:nth-child(3),
-.serial-table tbody td:nth-child(3) { min-width: 200px; }
+.serial-table tbody td:nth-child(3) { min-width: 150px; }
 .serial-table thead th:nth-child(4),
-.serial-table tbody td:nth-child(4) { min-width: 140px; }
+.serial-table tbody td:nth-child(4) { min-width: 200px; }
 .serial-table thead th:nth-child(5),
-.serial-table tbody td:nth-child(5) { min-width: 80px; }
+.serial-table tbody td:nth-child(5) { min-width: 140px; }
+.serial-table thead th:nth-child(6),
+.serial-table tbody td:nth-child(6) { min-width: 80px; }
 
 .serial-table td {
     padding: 12px;
@@ -688,12 +690,21 @@ main {
 }
 
 .roll-cell {
-    min-width: 280px;
+    min-width: 200px;
     text-align: center;
     font-weight: bold;
     font-size: 0.99rem;
     padding: 8px 4px;
     color: #333;
+}
+
+.name-cell {
+    min-width: 150px;
+    text-align: center;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 8px 4px;
+    color: #444;
 }
 
 .time-cell {

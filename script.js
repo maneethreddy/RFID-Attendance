@@ -8,6 +8,7 @@ class NFCScanner {
         this.lastScanTime = 0; // Track last scan time to avoid duplicates
         this.scanDelay = 1500; // 1 second delay between scans
         this.serialToRollMap = new Map(); // Map: serial -> roll number
+        this.serialToNameMap = new Map(); // Map: serial -> name
         this.initializeElements();
         this.bindEvents();
         this.checkNFCSupport();
@@ -65,11 +66,12 @@ class NFCScanner {
                 // try next candidate
             }
         }
-        console.warn('No roll mapping CSV found in project. Place a CSV (e.g., rolls.csv) in the project root with headers: Serial,Roll');
+        console.warn('No roll mapping CSV found in project. Place a CSV (e.g., rolls.csv) in the project root with headers: Serial,Roll,Name');
     }
 
     async reloadProjectCSVMapping() {
         this.serialToRollMap.clear();
+        this.serialToNameMap.clear();
         await this.loadProjectCSVMapping();
         const latestSerial = this.serialNumbers.length ? this.serialNumbers[this.serialNumbers.length - 1].serial : '';
         this.displayResults(this.formatSerialDisplay(latestSerial));
@@ -102,6 +104,8 @@ class NFCScanner {
         const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
         const serialIdx = headers.findIndex(h => ['serial','serialnumber','serial_number','tagserial','tag_serial'].includes(h));
         const rollIdx = headers.findIndex(h => ['roll','rollnumber','roll_number','rollno','roll_no'].includes(h));
+        const nameIdx = headers.findIndex(h => ['name','studentname','student_name','fullname','full_name'].includes(h));
+        
         if (serialIdx === -1 || rollIdx === -1) throw new Error('CSV missing Serial and Roll headers');
 
         for (let i = 1; i < lines.length; i++) {
@@ -109,8 +113,13 @@ class NFCScanner {
             if (cols.length <= Math.max(serialIdx, rollIdx)) continue;
             const serial = this.normalizeSerial(cols[serialIdx]);
             const roll = cols[rollIdx].trim();
+            const name = nameIdx !== -1 && cols[nameIdx] ? cols[nameIdx].trim() : '';
+            
             if (serial && roll) {
                 this.serialToRollMap.set(serial, roll);
+                if (name) {
+                    this.serialToNameMap.set(serial, name);
+                }
             }
         }
     }
@@ -315,6 +324,7 @@ class NFCScanner {
             display += `<tr>`;
             display += `<th>No.</th>`;
             display += `<th>Roll</th>`;
+            display += `<th>Name</th>`;
             display += `<th>Serial</th>`;
             display += `<th>Time</th>`;
             display += `<th>Count</th>`;
@@ -326,7 +336,9 @@ class NFCScanner {
                 display += `<tr>`;
                 display += `<td class="number-cell">${String(index + 1).padStart(3, '0')}</td>`;
                 const roll = this.serialToRollMap.get(this.normalizeSerial(entry.serial)) || '';
+                const name = this.serialToNameMap.get(this.normalizeSerial(entry.serial)) || '';
                 display += `<td class="roll-cell">${roll}</td>`;
+                display += `<td class="name-cell">${name}</td>`;
                 display += `<td class="serial-cell">${entry.serial}</td>`;
                 display += `<td class="time-cell">${entry.timestamp}</td>`;
                 display += `<td class="count-cell">`;
@@ -356,11 +368,12 @@ class NFCScanner {
         }
         
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        let csv = 'No.,Roll,Serial,Time,Count\n';
+        let csv = 'No.,Roll,Name,Serial,Time,Count\n';
         
         this.serialNumbers.forEach((entry, index) => {
             const roll = this.serialToRollMap.get(this.normalizeSerial(entry.serial)) || '';
-            csv += `${String(index + 1).padStart(3, '0')},${roll},${entry.serial},${entry.timestamp},${entry.scan_count}\n`;
+            const name = this.serialToNameMap.get(this.normalizeSerial(entry.serial)) || '';
+            csv += `${String(index + 1).padStart(3, '0')},${roll},${name},${entry.serial},${entry.timestamp},${entry.scan_count}\n`;
         });
         
         const blob = new Blob([csv], { type: 'text/csv' });
