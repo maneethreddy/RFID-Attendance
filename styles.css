@@ -636,21 +636,24 @@ main {
 }
 
 .number-cell {
-    width: 12%;
+    width: 40%;
     text-align: center;
     font-weight: bold;
     color: #4CAF50;
-    font-size: 0.95rem;
+    font-size: 1rem;
+    font-weight: bold;
+    word-break: break-all;
+    text-align: center;
     padding: 8px 2px;
 }
 
 .serial-cell {
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-weight: bold;
+    
     color: #333;
     letter-spacing: 0.5px;
-    font-size: 0.85rem;
-    width: 40%;
+    font-size: 0.65rem;
+    width: 20%;
     padding: 8px 4px;
     word-break: break-all;
     text-align: center;
