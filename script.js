@@ -6,7 +6,7 @@ class NFCScanner {
         this.lastTagData = null; // Store the last scanned tag data
         this.serialNumbers = []; // Store list of scanned serial numbers
         this.lastScanTime = 0; // Track last scan time to avoid duplicates
-        this.scanDelay = 1000; // 1 second delay between scans
+        this.scanDelay = 1500; // 1 second delay between scans
         this.initializeElements();
         this.bindEvents();
         this.checkNFCSupport();
@@ -199,24 +199,19 @@ class NFCScanner {
     formatSerialDisplay(serialNumber) {
         let display = '';
         
-        // Current scan info
-        display += `<div class="current-serial">`;
+        // Minimal scan status
+        display += `<div class="scan-status">`;
         if (this.isScanning) {
-            display += `<h3>📡 Continuous Scanning Active</h3>`;
-            display += `<div class="serial-number">${serialNumber}</div>`;
-            display += `<div class="scan-time">Last scanned: ${new Date().toLocaleString()}</div>`;
-            display += `<div class="scanning-status">Keep scanning tags to add them to the list below</div>`;
+            display += `<span class="status-text">📡 Scanning... (${this.serialNumbers.length} tags found)</span>`;
         } else {
-            display += `<h3>📱 Last Scanned</h3>`;
-            display += `<div class="serial-number">${serialNumber}</div>`;
-            display += `<div class="scan-time">Scanned at: ${new Date().toLocaleString()}</div>`;
+            display += `<span class="status-text">📱 Ready to scan (${this.serialNumbers.length} tags total)</span>`;
         }
         display += `</div>\n\n`;
         
-        // Serial numbers table
+        // Sequential numbers table
         display += `<div class="serial-list">`;
         display += `<div class="list-header">`;
-        display += `<h3>📋 Scanned Serial Numbers (${this.serialNumbers.length})</h3>`;
+        display += `<h3>📋 Scanned Tags (${this.serialNumbers.length})</h3>`;
         display += `<div class="list-controls">`;
         display += `<button onclick="window.nfcScanner.exportSerialList()" class="export-btn">Export List</button>`;
         display += `<button onclick="window.nfcScanner.clearSerialList()" class="clear-btn">Clear List</button>`;
@@ -228,17 +223,17 @@ class NFCScanner {
             display += `<table class="serial-table">`;
             display += `<thead>`;
             display += `<tr>`;
-            display += `<th>#</th>`;
-            display += `<th>Serial Number</th>`;
-            display += `<th>Last Seen</th>`;
-            display += `<th>Scan Count</th>`;
+            display += `<th>No.</th>`;
+            display += `<th>Tag Serial Number</th>`;
+            display += `<th>Scanned At</th>`;
+            display += `<th>Count</th>`;
             display += `</tr>`;
             display += `</thead>`;
             display += `<tbody>`;
             
             this.serialNumbers.forEach((entry, index) => {
                 display += `<tr>`;
-                display += `<td class="number-cell">${index + 1}</td>`;
+                display += `<td class="number-cell">${String(index + 1).padStart(3, '0')}</td>`;
                 display += `<td class="serial-cell">${entry.serial}</td>`;
                 display += `<td class="time-cell">${entry.timestamp}</td>`;
                 display += `<td class="count-cell">`;
@@ -255,7 +250,7 @@ class NFCScanner {
             display += `</table>`;
             display += `</div>`;
         } else {
-            display += `<div class="no-entries">No serial numbers scanned yet.</div>`;
+            display += `<div class="no-entries">No tags scanned yet.</div>`;
         }
         
         display += `</div>`;
@@ -270,10 +265,10 @@ class NFCScanner {
         }
         
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        let csv = 'Serial Number,First Scanned,Last Seen,Scan Count\n';
+        let csv = 'No.,Tag Serial Number,Scanned At,Scan Count\n';
         
-        this.serialNumbers.forEach(entry => {
-            csv += `${entry.serial},${entry.timestamp},${entry.timestamp},${entry.scan_count}\n`;
+        this.serialNumbers.forEach((entry, index) => {
+            csv += `${String(index + 1).padStart(3, '0')},${entry.serial},${entry.timestamp},${entry.scan_count}\n`;
         });
         
         const blob = new Blob([csv], { type: 'text/csv' });

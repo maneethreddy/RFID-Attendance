@@ -520,47 +520,20 @@ main {
     }
 }
 
-/* Serial number display styles */
-.current-serial {
-    background: linear-gradient(135deg, #4CAF50, #45a049);
-    color: white;
-    padding: 25px;
-    border-radius: 15px;
-    text-align: center;
-    margin-bottom: 25px;
-    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
+/* Minimal scan status display */
+.scan-status {
+    background: #f8f9fa;
+    border-left: 4px solid #4CAF50;
+    padding: 12px 20px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.current-serial h3 {
-    margin: 0 0 15px 0;
-    font-size: 1.3rem;
-    opacity: 0.9;
-}
-
-.serial-number {
-    font-size: 2rem;
-    font-weight: bold;
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    letter-spacing: 2px;
-    margin: 10px 0;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-.scan-time {
-    font-size: 0.95rem;
-    opacity: 0.8;
-    margin-top: 10px;
-}
-
-.scanning-status {
-    font-size: 0.9rem;
-    opacity: 0.9;
-    margin-top: 8px;
-    padding: 8px 16px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 20px;
-    display: inline-block;
-    animation: pulse 2s infinite;
+.status-text {
+    font-size: 1rem;
+    color: #333;
+    font-weight: 500;
 }
 
 .serial-list {
@@ -652,11 +625,11 @@ main {
 }
 
 .number-cell {
-    width: 60px;
+    width: 50px;
     text-align: center;
     font-weight: bold;
     color: #4CAF50;
-    font-size: 1rem;
+    font-size: 0.9rem;
 }
 
 .serial-cell {
@@ -664,17 +637,19 @@ main {
     font-weight: bold;
     color: #333;
     letter-spacing: 1px;
-    font-size: 1.05rem;
+    font-size: 1rem;
+    min-width: 120px;
 }
 
 .time-cell {
     color: #666;
     font-size: 0.9rem;
     white-space: nowrap;
+    min-width: 140px;
 }
 
 .count-cell {
-    width: 100px;
+    width: 80px;
     text-align: center;
 }
 
@@ -700,9 +675,13 @@ main {
 
 /* Responsive adjustments for serial display */
 @media (max-width: 768px) {
-    .serial-number {
-        font-size: 1.5rem;
-        letter-spacing: 1px;
+    .scan-status {
+        padding: 10px 15px;
+        margin-bottom: 15px;
+    }
+    
+    .status-text {
+        font-size: 0.9rem;
     }
     
     .list-header {
@@ -730,18 +709,21 @@ main {
     
     .number-cell {
         width: 40px;
-    }
-    
-    .serial-cell {
-        font-size: 0.9rem;
-    }
-    
-    .time-cell {
         font-size: 0.8rem;
     }
     
+    .serial-cell {
+        font-size: 0.85rem;
+        min-width: 100px;
+    }
+    
+    .time-cell {
+        font-size: 0.75rem;
+        min-width: 110px;
+    }
+    
     .count-cell {
-        width: 80px;
+        width: 50px;
     }
     
     .count-badge {
