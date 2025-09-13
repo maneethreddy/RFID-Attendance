@@ -547,9 +547,10 @@ main {
 .table-header {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    margin-bottom: 15px;
-    padding: 0 0 15px 0;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 0 0 12px 0;
     border-bottom: 2px solid #e9ecef;
 }
 
@@ -562,9 +563,11 @@ main {
 
 .table-controls {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     justify-content: center;
     width: 100%;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
 }
 
 .clear-btn {
@@ -589,10 +592,13 @@ main {
 .table-wrapper {
     width: 100%;
     overflow-x: auto;
+    overflow-y: visible;
     border: 1px solid #dee2e6;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     background: white;
+    margin-top: 8px;
+    margin-bottom: 24px;
 }
 
 .serial-table {
@@ -601,7 +607,7 @@ main {
     border-collapse: collapse;
     font-size: 0.9rem;
     background: white;
-    table-layout: fixed;
+    table-layout: auto;
 }
 
 .serial-table thead {
@@ -622,17 +628,17 @@ main {
     line-height: 1.2;
 }
 
-/* Explicit column widths (No., Roll, Serial, Time, Count) */
+/* Column minimum widths to avoid shrinking; horizontal scroll handles overflow */
 .serial-table thead th:nth-child(1),
-.serial-table tbody td:nth-child(1) { width: 8%; }
+.serial-table tbody td:nth-child(1) { min-width: 80px; }
 .serial-table thead th:nth-child(2),
-.serial-table tbody td:nth-child(2) { width: 60%; }
+.serial-table tbody td:nth-child(2) { min-width: 360px; }
 .serial-table thead th:nth-child(3),
-.serial-table tbody td:nth-child(3) { width: 16%; }
+.serial-table tbody td:nth-child(3) { min-width: 200px; }
 .serial-table thead th:nth-child(4),
-.serial-table tbody td:nth-child(4) { width: 12%; }
+.serial-table tbody td:nth-child(4) { min-width: 140px; }
 .serial-table thead th:nth-child(5),
-.serial-table tbody td:nth-child(5) { width: 8%; }
+.serial-table tbody td:nth-child(5) { min-width: 80px; }
 
 .serial-table td {
     padding: 12px;
@@ -651,7 +657,6 @@ main {
 }
 
 .number-cell {
-    width: 8%;
     text-align: center;
     font-weight: bold;
     color: #4CAF50;
@@ -664,14 +669,13 @@ main {
     color: #333;
     letter-spacing: 0.5px;
     font-size: 0.85rem;
-    width: 16%;
     padding: 8px 4px;
     word-break: break-all;
     text-align: center;
 }
 
 .roll-cell {
-    width: 60%;
+    min-width: 360px;
     text-align: center;
     font-size: 0.85rem;
     padding: 8px 4px;
@@ -681,7 +685,6 @@ main {
 .time-cell {
     color: #666;
     font-size: 0.75rem;
-    width: 12%;
     padding: 8px 4px;
     word-wrap: break-word;
     text-align: center;
@@ -689,7 +692,6 @@ main {
 }
 
 .count-cell {
-    width: 8%;
     text-align: center;
     padding: 8px 2px;
     font-size: 0.9rem;
@@ -713,6 +715,7 @@ main {
     background: #f8f9fa;
     border-radius: 10px;
     border: 2px dashed #dee2e6;
+    margin-bottom: 24px;
 }
 
 /* Desktop adjustments (mobile-first design) */
