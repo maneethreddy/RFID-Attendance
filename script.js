@@ -79,8 +79,25 @@ class NFCScanner {
         console.log('NFC tag detected:', event);
         
         try {
+            // Check if event and message exist
+            if (!event) {
+                throw new Error('No event data received');
+            }
+            
             const message = event.message;
+            if (!message) {
+                throw new Error('No message data in NFC tag');
+            }
+            
             const records = message.records;
+            if (!records) {
+                throw new Error('No records found in NFC message');
+            }
+            
+            // Ensure records is iterable (array-like)
+            if (!Array.isArray(records) && typeof records[Symbol.iterator] !== 'function') {
+                throw new Error('Records data is not iterable');
+            }
             
             let displayData = `NFC Tag Detected!\n\n`;
             
@@ -97,7 +114,9 @@ class NFCScanner {
             displayData += `</div>\n\n`;
             
             if (records.length > 0) {
-                records.forEach((record, index) => {
+                // Convert to array if it's not already to ensure forEach works
+                const recordsArray = Array.isArray(records) ? records : Array.from(records);
+                recordsArray.forEach((record, index) => {
                     displayData += `<div class="record-info">`;
                     displayData += `Record ${index + 1}:\n`;
                     displayData += `- Type: ${record.recordType}\n`;
@@ -107,7 +126,13 @@ class NFCScanner {
                     displayData += `- Data Length: ${record.data ? record.data.byteLength : 0} bytes\n`;
                     
                     // Parse data based on record type
-                    const parsedData = this.parseRecordData(record);
+                    let parsedData = '';
+                    try {
+                        parsedData = this.parseRecordData(record);
+                    } catch (parseError) {
+                        console.error('Error parsing record data:', parseError);
+                        parsedData = `- Error parsing record: ${parseError.message}\n`;
+                    }
                     displayData += parsedData;
                     displayData += `</div>\n\n`;
                 });
@@ -128,7 +153,29 @@ class NFCScanner {
 
         } catch (error) {
             console.error('Error processing NFC data:', error);
-            this.showError('Error processing NFC tag data: ' + error.message);
+            
+            // Provide more specific error messages based on error type
+            let errorMessage = 'Error processing NFC tag data: ';
+            
+            if (error.message.includes('No event data received')) {
+                errorMessage += 'No data received from NFC reader. Please try scanning again.';
+            } else if (error.message.includes('No message data in NFC tag')) {
+                errorMessage += 'This NFC tag appears to be empty or unformatted.';
+            } else if (error.message.includes('No records found in NFC message')) {
+                errorMessage += 'No readable data found on this NFC tag.';
+            } else if (error.message.includes('Records data is not iterable')) {
+                errorMessage += 'Invalid data format on this NFC tag.';
+            } else if (error.name === 'DataError') {
+                errorMessage += 'Invalid data format on NFC tag.';
+            } else if (error.name === 'NetworkError') {
+                errorMessage += 'Network error while reading NFC tag.';
+            } else if (error.name === 'SecurityError') {
+                errorMessage += 'Security error - NFC access may be restricted.';
+            } else {
+                errorMessage += error.message || 'Unknown error occurred.';
+            }
+            
+            this.showError(errorMessage);
         }
     }
 
@@ -276,6 +323,11 @@ class NFCScanner {
     }
 
     parseRecordData(record) {
+        // Check if record exists
+        if (!record) {
+            return '- Error: Record is null or undefined\n';
+        }
+        
         const decoder = new TextDecoder();
         let result = '';
         
@@ -518,23 +570,31 @@ class NFCScanner {
     }
 
     formatRawData(data) {
-        if (!data || data.byteLength === 0) {
+        if (!data) {
+            return 'No data available';
+        }
+        
+        if (data.byteLength === 0) {
             return 'Empty';
         }
         
         // Convert to hex string
-        const hex = Array.from(data)
-            .map(b => b.toString(16).padStart(2, '0'))
-            .join(' ');
-        
-        // Also try to show as ASCII if possible
+        let hex = '';
         let ascii = '';
+        
         try {
-            ascii = Array.from(data)
+            const dataArray = Array.from(data);
+            hex = dataArray
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join(' ');
+            
+            // Also try to show as ASCII if possible
+            ascii = dataArray
                 .map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.')
                 .join('');
         } catch (e) {
-            ascii = 'Non-printable';
+            hex = 'Unable to convert to hex';
+            ascii = 'Unable to convert to ASCII';
         }
         
         return `Hex: ${hex}\nASCII: ${ascii}`;
