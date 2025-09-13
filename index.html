@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFC Tag Scanner</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📱 NFC Tag Scanner</h1>
+            <p>Scan NFC tags using your device's built-in reader</p>
+        </header>
+
+        <main>
+            <div class="scanner-section">
+                <div class="scanner-status" id="scannerStatus">
+                    <div class="status-indicator" id="statusIndicator"></div>
+                    <span id="statusText">Ready to scan</span>
+                </div>
+                
+                <button id="scanButton" class="scan-button">
+                    <span class="button-icon">📡</span>
+                    <span class="button-text">Start Scanning</span>
+                </button>
+            </div>
+
+            <div class="results-section" id="resultsSection" style="display: none;">
+                <h2>Scanned Data</h2>
+                <div class="data-display" id="dataDisplay">
+                    <!-- Scanned data will be displayed here -->
+                </div>
+                <button id="clearButton" class="clear-button">Clear Results</button>
+            </div>
+
+            <div class="error-section" id="errorSection" style="display: none;">
+                <div class="error-message" id="errorMessage">
+                    <!-- Error messages will be displayed here -->
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h3>How to use:</h3>
+                <ol>
+                    <li>Click "Start Scanning" to begin</li>
+                    <li>Hold your device close to an NFC tag</li>
+                    <li>Wait for the scan to complete</li>
+                    <li>View the scanned data below</li>
+                </ol>
+                
+                <div class="compatibility-note">
+                    <strong>Note:</strong> This app requires a device with NFC capability and HTTPS connection for security.
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
