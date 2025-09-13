@@ -5,8 +5,8 @@ class NFCScanner {
         this.reader = null;
         this.lastTagData = null; // Store the last scanned tag data
         this.serialNumbers = []; // Store list of scanned serial numbers
-        this.lastScanTime = 0; // Track last scan time to prevent duplicates
-        this.scanDelay = 1500; // Minimum delay between scans (1.5 seconds)
+        this.lastScanTime = 0; // Track last scan time to avoid duplicates
+        this.scanDelay = 1000; // 1 second delay between scans
         this.initializeElements();
         this.bindEvents();
         this.checkNFCSupport();
@@ -56,9 +56,8 @@ class NFCScanner {
             await this.reader.scan();
             
             this.isScanning = true;
-            this.lastScanTime = 0; // Reset scan delay timer
             this.updateUI('scanning', 'Scanning for NFC tags...');
-            this.scanButton.innerHTML = '<span class="button-text">Stop Scanning</span>';
+            this.scanButton.innerHTML = '<span class="button-icon">⏹️</span><span class="button-text">Stop Scanning</span>';
             this.scanButton.disabled = false;
             this.hideError();
 
@@ -75,7 +74,7 @@ class NFCScanner {
     stopScanning() {
         this.isScanning = false;
         this.updateUI('ready', 'Ready to scan');
-        this.scanButton.innerHTML = '<span class="button-text">Start Scanning</span>';
+        this.scanButton.innerHTML = '<span class="button-icon">📡</span><span class="button-text">Start Scanning</span>';
         
         if (this.reader) {
             // Note: NDEFReader doesn't have a stop method, but we can reset our state
@@ -87,12 +86,13 @@ class NFCScanner {
         console.log('NFC tag detected:', event);
         
         try {
-            // Check for scan delay to prevent multiple detections
+            // Check for scan delay to avoid multiple detections
             const currentTime = Date.now();
             if (currentTime - this.lastScanTime < this.scanDelay) {
-                console.log('Scan ignored due to delay period');
+                console.log('Scan ignored due to delay filter');
                 return;
             }
+            this.lastScanTime = currentTime;
             
             // Check if event and message exist
             if (!event) {
@@ -117,9 +117,6 @@ class NFCScanner {
             // Extract serial number from the tag data
             const serialNumber = this.extractSerialNumber(event);
             
-            // Update last scan time
-            this.lastScanTime = currentTime;
-            
             if (serialNumber) {
                 // Add to serial numbers list if not already present
                 if (!this.serialNumbers.some(entry => entry.serial === serialNumber)) {
@@ -138,15 +135,8 @@ class NFCScanner {
                 }
                 
                 let displayData = this.formatSerialDisplay(serialNumber);
-                this.displayResults(displayData);
+            this.displayResults(displayData);
                 this.updateUI('scanning', `Scanning... (${this.serialNumbers.length} serial numbers found)`);
-                
-                // Show temporary cooldown status
-                setTimeout(() => {
-                    if (this.isScanning) {
-                        this.updateUI('scanning', `Ready for next scan... (${this.serialNumbers.length} found)`);
-                    }
-                }, 500);
             } else {
                 this.showError('No serial number found on this NFC tag.');
                 // Don't change the scanning status, keep scanning
@@ -209,50 +199,65 @@ class NFCScanner {
     formatSerialDisplay(serialNumber) {
         let display = '';
         
-        // Simple current scan info
-        display += `<div class="current-scan">`;
-        display += `<strong>Last Scanned:</strong> ${serialNumber} at ${new Date().toLocaleString()}`;
+        // Current scan info
+        display += `<div class="current-serial">`;
         if (this.isScanning) {
-            display += ` <span class="status-active">(Scanning Active)</span>`;
+            display += `<h3>📡 Continuous Scanning Active</h3>`;
+            display += `<div class="serial-number">${serialNumber}</div>`;
+            display += `<div class="scan-time">Last scanned: ${new Date().toLocaleString()}</div>`;
+            display += `<div class="scanning-status">Keep scanning tags to add them to the list below</div>`;
+        } else {
+            display += `<h3>📱 Last Scanned</h3>`;
+            display += `<div class="serial-number">${serialNumber}</div>`;
+            display += `<div class="scan-time">Scanned at: ${new Date().toLocaleString()}</div>`;
         }
-        display += `</div>`;
+        display += `</div>\n\n`;
         
-        // Controls
-        display += `<div class="controls">`;
-        display += `<button onclick="window.nfcScanner.exportSerialList()" class="btn">Export CSV</button>`;
-        display += `<button onclick="window.nfcScanner.clearSerialList()" class="btn btn-danger">Clear All</button>`;
+        // Serial numbers table
+        display += `<div class="serial-list">`;
+        display += `<div class="list-header">`;
+        display += `<h3>📋 Scanned Serial Numbers (${this.serialNumbers.length})</h3>`;
+        display += `<div class="list-controls">`;
+        display += `<button onclick="window.nfcScanner.exportSerialList()" class="export-btn">Export List</button>`;
+        display += `<button onclick="window.nfcScanner.clearSerialList()" class="clear-btn">Clear List</button>`;
         display += `</div>`;
-        
-        // Simple table
-        display += `<div class="table-container">`;
-        display += `<table class="serial-table">`;
-        display += `<thead>`;
-        display += `<tr>`;
-        display += `<th>#</th>`;
-        display += `<th>Serial Number</th>`;
-        display += `<th>Last Seen</th>`;
-        display += `<th>Count</th>`;
-        display += `</tr>`;
-        display += `</thead>`;
-        display += `<tbody>`;
+        display += `</div>`;
         
         if (this.serialNumbers.length > 0) {
+            display += `<div class="table-container">`;
+            display += `<table class="serial-table">`;
+            display += `<thead>`;
+            display += `<tr>`;
+            display += `<th>#</th>`;
+            display += `<th>Serial Number</th>`;
+            display += `<th>Last Seen</th>`;
+            display += `<th>Scan Count</th>`;
+            display += `</tr>`;
+            display += `</thead>`;
+            display += `<tbody>`;
+            
             this.serialNumbers.forEach((entry, index) => {
                 display += `<tr>`;
-                display += `<td>${index + 1}</td>`;
+                display += `<td class="number-cell">${index + 1}</td>`;
                 display += `<td class="serial-cell">${entry.serial}</td>`;
-                display += `<td>${entry.timestamp}</td>`;
-                display += `<td>${entry.scan_count}</td>`;
+                display += `<td class="time-cell">${entry.timestamp}</td>`;
+                display += `<td class="count-cell">`;
+                if (entry.scan_count > 1) {
+                    display += `<span class="count-badge">${entry.scan_count}</span>`;
+                } else {
+                    display += `1`;
+                }
+                display += `</td>`;
                 display += `</tr>`;
             });
+            
+            display += `</tbody>`;
+            display += `</table>`;
+            display += `</div>`;
         } else {
-            display += `<tr>`;
-            display += `<td colspan="4" class="no-data">No serial numbers scanned yet</td>`;
-            display += `</tr>`;
+            display += `<div class="no-entries">No serial numbers scanned yet.</div>`;
         }
         
-        display += `</tbody>`;
-        display += `</table>`;
         display += `</div>`;
         
         return display;
@@ -293,11 +298,9 @@ class NFCScanner {
         
         if (confirm(`Are you sure you want to clear all ${this.serialNumbers.length} serial numbers?`)) {
             this.serialNumbers = [];
-            this.lastTagData = null;
-            
             // Refresh display if results are visible
             if (this.resultsSection.style.display !== 'none') {
-                this.displayResults('<div class="table-container"><table class="serial-table"><thead><tr><th>#</th><th>Serial Number</th><th>Last Seen</th><th>Count</th></tr></thead><tbody><tr><td colspan="4" class="no-data">No serial numbers scanned yet</td></tr></tbody></table></div>');
+                this.displayResults('<div class="no-entries">Serial number list cleared.</div>');
             }
             this.showSuccessMessage('Serial number list cleared');
         }
